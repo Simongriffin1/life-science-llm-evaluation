@@ -40,9 +40,15 @@ class MedCPTCrossEncoderBackend:
                 "MedCPT cross-encoder requires the retrieval extra: `uv sync --extra retrieval`."
             ) from exc
 
-        logger.info("Loading MedCPT cross-encoder", extra={"device": self.device})
+        logger.info(
+            "MedCPT first load: downloading cross-encoder from Hugging Face if not cached "
+            f"({CROSS_ENCODER_ID}); this can take several minutes",
+            extra={"device": self.device},
+        )
+        from biolit.retrieval.torch_compat import from_pretrained_medcpt
+
         self._tokenizer = AutoTokenizer.from_pretrained(CROSS_ENCODER_ID)
-        self._model = AutoModelForSequenceClassification.from_pretrained(CROSS_ENCODER_ID)
+        self._model = from_pretrained_medcpt(AutoModelForSequenceClassification, CROSS_ENCODER_ID)
 
         if self.device.startswith("cuda") and not torch.cuda.is_available():
             logger.warning("CUDA requested but unavailable; falling back to CPU")

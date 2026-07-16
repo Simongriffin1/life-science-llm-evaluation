@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
+from dataclasses import dataclass, field
 from typing import Any
 
 import litellm
@@ -13,6 +17,50 @@ logger = get_logger(__name__)
 
 # Soft-disable litellm's own verbose logging; we use structured logs.
 litellm.suppress_debug_info = True
+
+
+class TokenBudgetExceeded(RuntimeError):
+    """Raised when cumulative LLM tokens exceed a hard budget."""
+
+
+@dataclass
+class TokenUsageTracker:
+    max_total_tokens: int | None = None
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    calls: int = 0
+    by_model: dict[str, dict[str, int]] = field(default_factory=dict)
+
+    @property
+    def total_tokens(self) -> int:
+        return self.prompt_tokens + self.completion_tokens
+
+    def record(self, model: str, prompt_tokens: int, completion_tokens: int) -> None:
+        self.prompt_tokens += prompt_tokens
+        self.completion_tokens += completion_tokens
+        self.calls += 1
+        bucket = self.by_model.setdefault(model, {"prompt": 0, "completion": 0, "calls": 0})
+        bucket["prompt"] += prompt_tokens
+        bucket["completion"] += completion_tokens
+        bucket["calls"] += 1
+        if self.max_total_tokens is not None and self.total_tokens > self.max_total_tokens:
+            raise TokenBudgetExceeded(
+                f"Token budget exceeded: used {self.total_tokens} > max {self.max_total_tokens}"
+            )
+
+
+_usage_tracker: ContextVar[TokenUsageTracker | None] = ContextVar("llm_usage_tracker", default=None)
+
+
+@contextmanager
+def track_token_usage(max_total_tokens: int | None = None) -> Iterator[TokenUsageTracker]:
+    """Accumulate token usage for nested ``complete`` calls; optionally enforce a hard cap."""
+    tracker = TokenUsageTracker(max_total_tokens=max_total_tokens)
+    token = _usage_tracker.set(tracker)
+    try:
+        yield tracker
+    finally:
+        _usage_tracker.reset(token)
 
 
 def _langfuse_enabled() -> bool:
@@ -85,6 +133,9 @@ async def complete(
         "finish_reason": getattr(choice, "finish_reason", None),
         "raw": response,
     }
+    tracker = _usage_tracker.get()
+    if tracker is not None:
+        tracker.record(resolved_model, prompt_tokens, completion_tokens)
     logger.info(
         "llm.complete.done",
         extra={

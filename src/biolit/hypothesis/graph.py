@@ -13,7 +13,7 @@ from biolit.hypothesis.agents.meta_review import meta_review
 from biolit.hypothesis.agents.proximity import cluster_hypotheses, ranking_pool
 from biolit.hypothesis.agents.reflection import reflect_all
 from biolit.hypothesis.models import HypothesisConfig, HypothesisDraft
-from biolit.hypothesis.provenance import require_provenance
+from biolit.hypothesis.provenance import enforce_cite_only, require_provenance
 from biolit.hypothesis.tournament import run_tournament_round
 
 logger = get_logger(__name__)
@@ -30,6 +30,7 @@ class HypothesisState(TypedDict, total=False):
     tournament_round: int
     human_feedback: str | None
     budget_used: dict[str, Any]
+    allowed_pmids: list[str]
 
 
 def _cfg(state: HypothesisState) -> HypothesisConfig:
@@ -44,15 +45,23 @@ def _dump(hyps: list[HypothesisDraft]) -> list[dict[str, Any]]:
     return [h.model_dump() for h in hyps]
 
 
+def _allowed(state: HypothesisState) -> set[str]:
+    return {str(p) for p in (state.get("allowed_pmids") or [])}
+
+
 async def node_generate(state: HypothesisState) -> dict[str, Any]:
     cfg = _cfg(state)
-    drafts, _docs = await generate_seeds(state["research_goal"], cfg)
+    drafts, docs = await generate_seeds(state["research_goal"], cfg)
+    allowed = {d.pmid for d in docs}
     drafts = require_provenance(drafts)
+    drafts = enforce_cite_only(drafts, allowed, strict=True)
     return {
         "hypotheses": _dump(drafts),
+        "allowed_pmids": sorted(allowed),
         "budget_used": {
             **(state.get("budget_used") or {}),
             "n_generated": len(drafts),
+            "n_retrieved": len(docs),
         },
     }
 
@@ -65,6 +74,7 @@ async def node_reflect(state: HypothesisState) -> dict[str, Any]:
         goal = f"{goal}\nHuman feedback: {feedback}"
     reflected = await reflect_all(_hyps(state), research_goal=goal, config=cfg)
     reflected = require_provenance(reflected)
+    reflected = enforce_cite_only(reflected, _allowed(state), strict=True)
     clustered = cluster_hypotheses(reflected)
     return {"hypotheses": _dump(clustered)}
 
@@ -105,6 +115,7 @@ async def node_evolve(state: HypothesisState) -> dict[str, Any]:
         generation=evo_round,
     )
     kids = require_provenance(kids)
+    kids = enforce_cite_only(kids, _allowed(state), strict=True)
     merged = _hyps(state) + kids
     clustered = cluster_hypotheses(merged)
     return {
@@ -121,6 +132,7 @@ async def node_meta_review(state: HypothesisState) -> dict[str, Any]:
         config=cfg,
     )
     proposals = require_provenance(proposals)
+    proposals = enforce_cite_only(proposals, _allowed(state), strict=True)
     return {"proposals": _dump(proposals)}
 
 

@@ -31,9 +31,13 @@ class HypothesisDraft(BaseModel):
     status: str = "active"
     evidence: list[EvidenceRef] = Field(default_factory=list)
     reflection: str | None = None
+    unvalidated_lead: bool = True
 
     def has_provenance(self) -> bool:
         return len(self.evidence) > 0
+
+    def cited_pmids(self) -> set[str]:
+        return {e.pmid for e in self.evidence}
 
 
 class HypothesisConfig(BaseModel):
@@ -49,6 +53,7 @@ class HypothesisConfig(BaseModel):
     elo_k: float = 32.0
     max_proposals: int = 3
     human_feedback: str | None = None
+    max_total_tokens: int | None = 80_000
 
 
 class HypothesisRunResult(BaseModel):
@@ -59,3 +64,4 @@ class HypothesisRunResult(BaseModel):
     n_hypotheses: int = 0
     n_matches: int = 0
     budget_used: dict[str, Any] = Field(default_factory=dict)
+    retrieved_pmids: list[str] = Field(default_factory=list)

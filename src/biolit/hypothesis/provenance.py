@@ -85,6 +85,48 @@ def require_provenance(hypotheses: list[HypothesisDraft]) -> list[HypothesisDraf
     return kept
 
 
+class CiteOnlyViolation(ValueError):
+    """Raised when a hypothesis cites a PMID outside the retrieval set."""
+
+    def __init__(self, hypothesis_id: str, illegal_pmids: list[str]) -> None:
+        self.hypothesis_id = hypothesis_id
+        self.illegal_pmids = illegal_pmids
+        super().__init__(
+            f"Hypothesis {hypothesis_id} cites PMIDs outside retrieval set: {illegal_pmids}"
+        )
+
+
+def enforce_cite_only(
+    hypotheses: list[HypothesisDraft],
+    allowed_pmids: set[str] | list[str],
+    *,
+    strict: bool = True,
+) -> list[HypothesisDraft]:
+    """
+    Cite-only: every evidence PMID must be in the retrieval set for this run.
+
+    When ``strict`` is True (default), illegal citations fail closed.
+    Always stamps ``unvalidated_lead=True`` on kept drafts.
+    """
+    allowed = {str(p) for p in allowed_pmids}
+    kept: list[HypothesisDraft] = []
+    for h in hypotheses:
+        illegal = sorted({e.pmid for e in h.evidence if e.pmid not in allowed})
+        if illegal:
+            if strict:
+                raise CiteOnlyViolation(h.id, illegal)
+            legal = [e for e in h.evidence if e.pmid in allowed]
+            if not legal:
+                logger.warning(
+                    "hypothesis.dropped_no_cite_only_evidence",
+                    extra={"hypothesis_id": h.id},
+                )
+                continue
+            h = h.model_copy(update={"evidence": legal})
+        kept.append(h.model_copy(update={"unvalidated_lead": True}))
+    return kept
+
+
 async def persist_evidence(hypothesis_id: str, evidence: list[EvidenceRef]) -> int:
     """Write evidence rows for a persisted hypothesis. Returns count written."""
     if not evidence:

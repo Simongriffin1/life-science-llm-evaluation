@@ -165,8 +165,10 @@ async def test_hypothesis_run_requires_evidence(hyp_env: None) -> None:
         assert p.falsification
         assert p.elo is not None
         assert p.has_provenance()
+        assert p.unvalidated_lead is True
         assert len(p.evidence) >= 1
         assert all(e.pmid for e in p.evidence)
+        assert p.cited_pmids().issubset(set(result.retrieved_pmids))
 
     factory = get_session_factory()
     async with factory() as session:

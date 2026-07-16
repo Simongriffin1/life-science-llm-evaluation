@@ -101,6 +101,7 @@ async def generate_seeds(
                 falsification=str(item.get("falsification") or "") or None,
                 generation=0,
                 evidence=evidence,
+                unvalidated_lead=True,
             )
         )
 

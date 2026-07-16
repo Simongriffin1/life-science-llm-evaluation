@@ -44,6 +44,11 @@ def _usd(model: str, prompt_tokens: int, completion_tokens: int) -> float:
     ]
 
 
+def usd_for_usage(model: str, prompt_tokens: int, completion_tokens: int) -> float:
+    """Public wrapper for pricing actual token usage."""
+    return round(_usd(model, prompt_tokens, completion_tokens), 6)
+
+
 def estimate_eval_cost(
     *,
     models: list[str],

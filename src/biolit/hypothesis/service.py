@@ -7,10 +7,11 @@ from typing import Any
 from uuid import uuid4
 
 from biolit.core.db import Hypothesis, HypothesisRun, TournamentMatch, get_session_factory
+from biolit.core.llm import track_token_usage
 from biolit.core.logging import get_logger
 from biolit.hypothesis.graph import build_hypothesis_graph
 from biolit.hypothesis.models import HypothesisConfig, HypothesisDraft, HypothesisRunResult
-from biolit.hypothesis.provenance import persist_evidence, require_provenance
+from biolit.hypothesis.provenance import enforce_cite_only, persist_evidence, require_provenance
 
 logger = get_logger(__name__)
 
@@ -86,11 +87,15 @@ async def execute_hypothesis(
         "tournament_round": 0,
         "human_feedback": cfg.human_feedback,
         "budget_used": {},
+        "allowed_pmids": [],
     }
     try:
-        final = await graph.ainvoke(initial)
+        with track_token_usage(cfg.max_total_tokens) as usage:
+            final = await graph.ainvoke(initial)
+        allowed = {str(p) for p in (final.get("allowed_pmids") or [])}
         proposals = [HypothesisDraft.model_validate(p) for p in (final.get("proposals") or [])]
         proposals = require_provenance(proposals)
+        proposals = enforce_cite_only(proposals, allowed, strict=True)
         all_hyps = [HypothesisDraft.model_validate(h) for h in (final.get("hypotheses") or [])]
         # Persist all active/proposal hypotheses that have evidence.
         to_store = [
@@ -123,15 +128,24 @@ async def execute_hypothesis(
                     )
                 await session.commit()
 
-        # Verify invariant: every proposal has evidence
+        # Verify invariant: every proposal has evidence + cite-only + unvalidated_lead
         for p in proposals:
             if not p.has_provenance():
                 raise RuntimeError(f"Proposal {p.id} missing evidence")
+            if not p.unvalidated_lead:
+                raise RuntimeError(f"Proposal {p.id} missing unvalidated_lead=true")
+            illegal = sorted(p.cited_pmids() - allowed)
+            if illegal:
+                raise RuntimeError(f"Proposal {p.id} cites non-retrieved PMIDs: {illegal}")
 
         budget = dict(final.get("budget_used") or {})
         budget["n_matches"] = len(final.get("matches") or [])
         budget["n_hypotheses"] = len(uniq)
         budget["n_proposals"] = len(proposals)
+        budget["prompt_tokens"] = usage.prompt_tokens
+        budget["completion_tokens"] = usage.completion_tokens
+        budget["total_tokens"] = usage.total_tokens
+        budget["llm_calls"] = usage.calls
 
         async with factory() as session:
             run = await session.get(HypothesisRun, run_id)
@@ -149,6 +163,7 @@ async def execute_hypothesis(
             n_hypotheses=len(uniq),
             n_matches=int(budget.get("n_matches") or 0),
             budget_used=budget,
+            retrieved_pmids=sorted(allowed),
         )
     except Exception as exc:
         logger.exception("hypothesis.run_failed", extra={"run_id": run_id})

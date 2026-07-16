@@ -76,6 +76,7 @@ async def evolve(
                 generation=generation,
                 parent_id=str(parent_ids[0]) if parent_ids else parents[0].id,
                 evidence=evidence,
+                unvalidated_lead=True,
             )
         )
     return [o for o in offspring if o.statement and o.has_provenance()]

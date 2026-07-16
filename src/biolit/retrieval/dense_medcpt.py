@@ -51,11 +51,17 @@ class MedCPTBackend:
                 "`uv sync --extra retrieval` (torch + transformers)."
             ) from exc
 
-        logger.info("Loading MedCPT encoders", extra={"device": self.device})
+        logger.info(
+            "MedCPT first load: downloading encoders from Hugging Face if not cached "
+            f"({QUERY_ENCODER_ID}, {ARTICLE_ENCODER_ID}); this can take several minutes",
+            extra={"device": self.device},
+        )
+        from biolit.retrieval.torch_compat import from_pretrained_medcpt
+
         self._query_tokenizer = AutoTokenizer.from_pretrained(QUERY_ENCODER_ID)
-        self._query_model = AutoModel.from_pretrained(QUERY_ENCODER_ID)
+        self._query_model = from_pretrained_medcpt(AutoModel, QUERY_ENCODER_ID)
         self._article_tokenizer = AutoTokenizer.from_pretrained(ARTICLE_ENCODER_ID)
-        self._article_model = AutoModel.from_pretrained(ARTICLE_ENCODER_ID)
+        self._article_model = from_pretrained_medcpt(AutoModel, ARTICLE_ENCODER_ID)
 
         if self.device.startswith("cuda") and not torch.cuda.is_available():
             logger.warning("CUDA requested but unavailable; falling back to CPU")
