@@ -1,24 +1,35 @@
-"""Retrieval API router (stub until Phase 2)."""
+"""Retrieval API router."""
 
-from fastapi import APIRouter
+from __future__ import annotations
+
+from typing import Literal
+
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
+
+from biolit.retrieval.service import RetrieveFilters, RetrieveResult, retrieve
 
 router = APIRouter()
 
 
 class RetrieveRequest(BaseModel):
-    query: str
-    filters: dict[str, object] | None = None
+    query: str = Field(min_length=1)
+    filters: RetrieveFilters | None = None
     top_k: int = Field(default=20, ge=1, le=100)
-    mode: str = Field(default="hybrid", pattern="^(bm25|dense|hybrid)$")
+    mode: Literal["bm25", "dense", "hybrid"] = "hybrid"
+    candidate_cap: int | None = Field(default=None, ge=1, le=500)
 
 
-class RetrieveResponse(BaseModel):
-    status: str = "not_implemented"
-    message: str = "Retrieval lands in Phase 1–2"
-
-
-@router.post("")
-async def retrieve(_body: RetrieveRequest) -> RetrieveResponse:
-    """Stub: hybrid retrieval arrives in Phases 1–2."""
-    return RetrieveResponse()
+@router.post("", response_model=RetrieveResult)
+async def retrieve_endpoint(body: RetrieveRequest) -> RetrieveResult:
+    """Hybrid PubMed retrieval (BM25 + MedCPT + RRF + cross-encoder rerank)."""
+    try:
+        return await retrieve(
+            body.query,
+            filters=body.filters,
+            top_k=body.top_k,
+            mode=body.mode,
+            candidate_cap=body.candidate_cap,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc

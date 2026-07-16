@@ -39,13 +39,3 @@ async def test_health_returns_200(client: AsyncClient) -> None:
     assert body["app"] == "biolit"
     assert body["db"]["ok"] is True
     assert body["redis"]["ok"] is True
-
-
-@pytest.mark.asyncio
-async def test_retrieve_stub(client: AsyncClient) -> None:
-    response = await client.post(
-        "/retrieve",
-        json={"query": "TREM2 microglia", "top_k": 5, "mode": "hybrid"},
-    )
-    assert response.status_code == 200
-    assert response.json()["status"] == "not_implemented"
