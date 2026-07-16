@@ -30,6 +30,7 @@ dependencies = [
 retrieval = [
     "torch>=2.2.2,<2.3; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     "torch>=2.2.2; sys_platform != 'darwin' or platform_machine != 'x86_64'",
+    "transformers>=4.44.0",
     "sentence-transformers>=3.0.0",
 ]
 datasets = [
@@ -79,6 +80,11 @@ module = [
     "langfuse.*",
     "arq.*",
     "pgvector.*",
+    "rank_bm25",
+    "transformers",
+    "transformers.*",
+    "torch",
+    "torch.*",
 ]
 ignore_missing_imports = true
 
