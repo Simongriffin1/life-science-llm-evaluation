@@ -26,6 +26,8 @@ htmlcov/
 # Data / models (large)
 data/datasets/**
 !data/datasets/.gitkeep
+!data/datasets/**/
+!data/datasets/**/sample.jsonl
 data/indices/**
 !data/indices/.gitkeep
 *.pt
