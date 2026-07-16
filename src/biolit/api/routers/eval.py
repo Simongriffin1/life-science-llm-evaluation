@@ -7,6 +7,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
+from biolit.core.costing import CostEstimate, estimate_eval_cost
 from biolit.core.logging import get_logger
 from biolit.eval.leaderboard import leaderboard
 from biolit.eval.service import EvalConfig, EvalJobResult, execute_eval
@@ -25,6 +26,7 @@ class EvalRequest(BaseModel):
     limit: int | None = Field(default=20, ge=1, le=500)
     split: str = "test"
     use_cache: bool = True
+    dry_run: bool = False
     sync: bool = Field(
         default=True,
         description="If true, run inline and return results; if false, enqueue arq job.",
@@ -36,6 +38,7 @@ class EvalEnqueueResponse(BaseModel):
     job_id: str | None = None
     message: str | None = None
     result: EvalJobResult | None = None
+    estimate: CostEstimate | None = None
 
 
 @router.post("", response_model=EvalEnqueueResponse)
@@ -44,6 +47,7 @@ async def enqueue_eval(
     background_tasks: BackgroundTasks,
 ) -> EvalEnqueueResponse:
     """Start an eval sweep (sync by default for local/dev; arq when sync=false)."""
+    modes = body.mode if isinstance(body.mode, list) else [body.mode]
     cfg = EvalConfig(
         models=body.models,
         datasets=body.datasets,
@@ -56,6 +60,20 @@ async def enqueue_eval(
         use_cache=body.use_cache,
     )
 
+    if body.dry_run:
+        estimate = estimate_eval_cost(
+            models=body.models,
+            datasets=body.datasets,
+            modes=list(modes),
+            limit=int(body.limit or 20),
+            with_judge=bool(body.judge_model),
+        )
+        return EvalEnqueueResponse(
+            status="dry_run",
+            estimate=estimate,
+            message="Cost estimate only; no eval executed",
+        )
+
     if body.sync:
         try:
             result = await execute_eval(cfg)
@@ -66,8 +84,6 @@ async def enqueue_eval(
             raise HTTPException(status_code=500, detail=str(exc)) from exc
         return EvalEnqueueResponse(status="completed", result=result)
 
-    # Async path: try arq enqueue; fall back to BackgroundTasks.
-    job_id: str | None = None
     try:
         from arq import create_pool
         from arq.connections import RedisSettings

@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
+from biolit.core.costing import CostEstimate, estimate_hypothesis_cost
 from biolit.core.logging import get_logger
 from biolit.hypothesis.models import HypothesisConfig, HypothesisRunResult
 from biolit.hypothesis.service import execute_hypothesis
@@ -18,6 +19,7 @@ router = APIRouter()
 class HypothesizeRequest(BaseModel):
     research_goal: str = Field(min_length=3)
     config: HypothesisConfig | dict[str, Any] | None = None
+    dry_run: bool = False
     sync: bool = Field(
         default=True,
         description="Run inline when true; otherwise enqueue arq / background task.",
@@ -29,6 +31,7 @@ class HypothesizeResponse(BaseModel):
     job_id: str | None = None
     message: str | None = None
     result: HypothesisRunResult | None = None
+    estimate: CostEstimate | None = None
 
 
 @router.post("", response_model=HypothesizeResponse)
@@ -42,6 +45,20 @@ async def enqueue_hypothesis(
         if isinstance(body.config, HypothesisConfig)
         else HypothesisConfig.model_validate(body.config or {})
     )
+
+    if body.dry_run:
+        estimate = estimate_hypothesis_cost(
+            model=cfg.model,
+            n_seed=cfg.n_seed,
+            evolution_rounds=cfg.evolution_rounds,
+            tournament_rounds=cfg.tournament_rounds,
+            max_proposals=cfg.max_proposals,
+        )
+        return HypothesizeResponse(
+            status="dry_run",
+            estimate=estimate,
+            message="Cost estimate only; no hypothesis run executed",
+        )
 
     if body.sync:
         try:
