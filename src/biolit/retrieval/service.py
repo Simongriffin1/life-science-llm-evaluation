@@ -52,6 +52,7 @@ class RetrieveResult(BaseModel):
     query: str
     mode: RetrievalMode
     top_k: int
+    use_index: bool = False
     documents: list[ScoredDocument]
 
 
@@ -179,6 +180,7 @@ async def retrieve(
     mode: RetrievalMode = "hybrid",
     candidate_cap: int | None = None,
     persist: bool = True,
+    use_index: bool | None = None,
     pubmed_client: PubMedClient | None = None,
 ) -> RetrieveResult:
     """
@@ -188,7 +190,18 @@ async def retrieve(
       - bm25: lexical only
       - dense: MedCPT dense only
       - hybrid: BM25 + dense → RRF → MedCPT cross-encoder rerank
+
+    When ``use_index`` is True, candidates and the dense leg come from the
+    persistent pgvector corpus (no live E-utilities). Falls back to the live
+    path if the index is empty.
     """
+    from biolit.ingest.indexer import (
+        indexed_chunk_count,
+        load_all_indexed_documents,
+        load_documents_by_pmids,
+        rank_dense_from_index,
+    )
+
     settings = get_settings()
     k = top_k if top_k is not None else settings.retrieval_top_k
     cap = candidate_cap if candidate_cap is not None else settings.retrieval_candidate_cap
@@ -200,40 +213,75 @@ async def retrieve(
     )
     filters_json = filt.model_dump(exclude_none=True)
 
-    owns_client = pubmed_client is None
-    client = pubmed_client or PubMedClient()
-    try:
-        documents = await client.search_documents(
-            query,
-            retmax=cap,
-            mindate=filt.date_from,
-            maxdate=filt.date_to,
-            mesh=filt.mesh,
-            journal=filt.journal,
-        )
-    finally:
-        if owns_client:
-            await client.aclose()
+    # Auto: use the persistent index when one exists and the caller asked for auto.
+    if use_index is None:
+        use_index = False
+    if use_index and await indexed_chunk_count() == 0:
+        logger.warning("use_index requested but no chunks found; falling back to live path")
+        use_index = False
 
-    if not documents:
-        return RetrieveResult(query=query, mode=mode, top_k=k, documents=[])
-
-    by_pmid = {d.pmid: d for d in documents}
-    final_hits: list[RankedHit]
-
-    if mode == "bm25":
-        final_hits = _bm25_to_ranked(rank_bm25(query, documents, top_k=k))
-    elif mode == "dense":
-        final_hits = await rank_dense(query, documents, top_k=k)
+    documents: list[PubMedDocument]
+    if use_index:
+        if mode == "dense":
+            dense_hits = await rank_dense_from_index(query, top_k=k)
+            documents = await load_documents_by_pmids([h.pmid for h in dense_hits])
+            by_pmid = {d.pmid: d for d in documents}
+            final_hits = dense_hits
+        else:
+            documents = await load_all_indexed_documents(limit=cap)
+            if not documents:
+                return RetrieveResult(query=query, mode=mode, top_k=k, use_index=True, documents=[])
+            by_pmid = {d.pmid: d for d in documents}
+            if mode == "bm25":
+                final_hits = _bm25_to_ranked(rank_bm25(query, documents, top_k=k))
+            else:
+                bm25_hits = _bm25_to_ranked(rank_bm25(query, documents))
+                dense_hits = await rank_dense_from_index(query, top_k=len(documents))
+                fused = reciprocal_rank_fusion(
+                    {"bm25": bm25_hits, "dense": dense_hits},
+                    top_k=min(len(documents), max(k * 2, k)),
+                )
+                # Ensure docs cover fused PMIDs (dense may surface extras).
+                missing = [h.pmid for h in fused if h.pmid not in by_pmid]
+                if missing:
+                    extra = await load_documents_by_pmids(missing)
+                    for doc in extra:
+                        by_pmid[doc.pmid] = doc
+                        documents.append(doc)
+                final_hits = await rerank(query, fused, documents, top_k=k)
     else:
-        bm25_hits = _bm25_to_ranked(rank_bm25(query, documents))
-        dense_hits = await rank_dense(query, documents)
-        # Fuse full rankings, then rerank top fused candidates (2x top_k pool).
-        fused = reciprocal_rank_fusion(
-            {"bm25": bm25_hits, "dense": dense_hits},
-            top_k=min(len(documents), max(k * 2, k)),
-        )
-        final_hits = await rerank(query, fused, documents, top_k=k)
+        owns_client = pubmed_client is None
+        client = pubmed_client or PubMedClient()
+        try:
+            documents = await client.search_documents(
+                query,
+                retmax=cap,
+                mindate=filt.date_from,
+                maxdate=filt.date_to,
+                mesh=filt.mesh,
+                journal=filt.journal,
+            )
+        finally:
+            if owns_client:
+                await client.aclose()
+
+        if not documents:
+            return RetrieveResult(query=query, mode=mode, top_k=k, use_index=False, documents=[])
+
+        by_pmid = {d.pmid: d for d in documents}
+
+        if mode == "bm25":
+            final_hits = _bm25_to_ranked(rank_bm25(query, documents, top_k=k))
+        elif mode == "dense":
+            final_hits = await rank_dense(query, documents, top_k=k)
+        else:
+            bm25_hits = _bm25_to_ranked(rank_bm25(query, documents))
+            dense_hits = await rank_dense(query, documents)
+            fused = reciprocal_rank_fusion(
+                {"bm25": bm25_hits, "dense": dense_hits},
+                top_k=min(len(documents), max(k * 2, k)),
+            )
+            final_hits = await rerank(query, fused, documents, top_k=k)
 
     highlights = {
         hit.pmid: highlight_spans(query, by_pmid[hit.pmid].text_for_lexical())
@@ -248,24 +296,26 @@ async def retrieve(
             filters_json or None,
             mode,
             k,
-            documents,
+            list(by_pmid.values()),
             final_hits,
             highlights,
         )
 
     scored: list[ScoredDocument] = []
     for hit in final_hits:
-        doc = by_pmid[hit.pmid]
+        maybe_doc = by_pmid.get(hit.pmid)
+        if maybe_doc is None:
+            continue
         scored.append(
             ScoredDocument(
-                pmid=doc.pmid,
-                title=doc.title,
-                abstract=doc.abstract,
-                authors=doc.authors,
-                journal=doc.journal,
-                pub_date=doc.pub_date,
-                mesh_terms=doc.mesh_terms,
-                doi=doc.doi,
+                pmid=maybe_doc.pmid,
+                title=maybe_doc.title,
+                abstract=maybe_doc.abstract,
+                authors=maybe_doc.authors,
+                journal=maybe_doc.journal,
+                pub_date=maybe_doc.pub_date,
+                mesh_terms=maybe_doc.mesh_terms,
+                doi=maybe_doc.doi,
                 rank=hit.rank,
                 score=hit.score,
                 scores=hit.scores,
@@ -275,12 +325,18 @@ async def retrieve(
 
     logger.info(
         "retrieval.done",
-        extra={"mode": mode, "n_docs": len(documents), "returned": len(scored)},
+        extra={
+            "mode": mode,
+            "use_index": use_index,
+            "n_docs": len(documents),
+            "returned": len(scored),
+        },
     )
     return RetrieveResult(
         query_id=query_id,
         query=query,
         mode=mode,
         top_k=k,
+        use_index=use_index,
         documents=scored,
     )
