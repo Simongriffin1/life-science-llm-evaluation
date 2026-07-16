@@ -1,0 +1,10 @@
+---
+description: Hypothesis subsystem
+globs: ["src/biolit/hypothesis/**"]
+alwaysApply: false
+---
+- LangGraph state machine: generation -> reflection -> ranking(Elo tournament) -> evolution -> (rank) ... -> meta-review.
+- Generation may only assert claims it can cite; ground every seed with a retrieval call.
+- Ranking is pairwise with an LLM judge; update Elo. Dedup near-duplicates before ranking.
+- Meta-review outputs proposals with mechanism, experiment, explicit falsification criterion, evidence trail.
+- Mandatory provenance: persist evidence rows (pmid, snippet, stance) for every hypothesis.

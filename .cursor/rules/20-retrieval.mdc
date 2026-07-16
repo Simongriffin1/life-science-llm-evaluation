@@ -1,0 +1,9 @@
+---
+description: Retrieval subsystem
+globs: ["src/biolit/retrieval/**", "src/biolit/ingest/**"]
+alwaysApply: false
+---
+- Pipeline: esearch -> efetch/esummary -> BM25 + MedCPT dense -> RRF fuse -> MedCPT cross-encoder rerank.
+- Always send NCBI tool+email+api_key params. Back off on 429. Cache E-utilities responses in Redis.
+- Return per-retriever scores and highlighted spans. Persist queries and hits.
+- MedCPT models: ncbi/MedCPT-Query-Encoder, -Article-Encoder, -Cross-Encoder. Load once, reuse.

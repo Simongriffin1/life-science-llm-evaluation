@@ -1,0 +1,9 @@
+---
+description: Project-wide conventions
+alwaysApply: true
+---
+- Read AGENTS.md before acting. The golden rules there are binding.
+- Retrieval is shared; do not duplicate PubMed access logic.
+- All model calls go through biolit.core.llm. Never import anthropic/openai/google SDKs elsewhere.
+- Config-driven, not hard-coded. Async for network I/O. Structured logging only.
+- Finish a task only when ruff, mypy, and pytest pass and there is a runnable check.

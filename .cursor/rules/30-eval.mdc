@@ -1,0 +1,9 @@
+---
+description: Eval subsystem
+globs: ["src/biolit/eval/**"]
+alwaysApply: false
+---
+- Datasets: pubmedqa, bioasq, medqa, medmcqa, mmlu_med. Record license per dataset.
+- Modes: closed_book (CoT) and rag (retrieval-injected). Support both for every run.
+- Metrics: accuracy/F1 for MCQA; LLM-judge for open-ended; recall@k/MRR/nDCG when gold PMIDs exist; groundedness; tokens/latency.
+- Every run is config+seed; results are immutable rows. Cache LLM responses by (model, prompt-hash).

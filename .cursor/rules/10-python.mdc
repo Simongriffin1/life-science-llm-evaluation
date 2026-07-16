@@ -1,0 +1,9 @@
+---
+description: Python standards
+globs: ["src/**/*.py", "tests/**/*.py"]
+alwaysApply: false
+---
+- Python 3.11+, full type hints, Pydantic models for IO and settings.
+- Prefer httpx (async) for HTTP; respect timeouts and retries with backoff.
+- Keep functions small and pure where possible; isolate side effects.
+- Write pytest tests alongside features. Mock external services (NCBI, LLM providers) in unit tests.

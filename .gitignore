@@ -1,0 +1,39 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Env / secrets
+.env
+.env.local
+*.pem
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Data / models (large)
+data/datasets/**
+!data/datasets/.gitkeep
+data/indices/**
+!data/indices/.gitkeep
+*.pt
+*.bin
+*.safetensors
+
+# Notebooks checkpoints
+notebooks/.ipynb_checkpoints/
+
+# uv
+uv.lock.bak
