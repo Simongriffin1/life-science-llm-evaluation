@@ -1,1 +1,1 @@
-"""Hypothesis agents."""
+"""Hypothesis agents package."""

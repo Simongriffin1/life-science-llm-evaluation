@@ -40,10 +40,25 @@ class _HashDense:
 @pytest.fixture
 async def clean_index() -> None:
     await init_db()
-    from biolit.core.db import RetrievalHit, RetrievalQuery, get_session_factory
+    from biolit.core.db import (
+        Evidence,
+        Hypothesis,
+        HypothesisRun,
+        RetrievalHit,
+        RetrievalQuery,
+        TournamentMatch,
+        get_session_factory,
+    )
 
     factory = get_session_factory()
     async with factory() as session:
+        await session.execute(delete(TournamentMatch))
+        await session.execute(delete(Evidence))
+        await session.execute(
+            Hypothesis.__table__.update().values(parent_id=None)  # type: ignore[attr-defined]
+        )
+        await session.execute(delete(Hypothesis))
+        await session.execute(delete(HypothesisRun))
         await session.execute(delete(RetrievalHit))
         await session.execute(delete(RetrievalQuery))
         await session.execute(delete(Chunk))
