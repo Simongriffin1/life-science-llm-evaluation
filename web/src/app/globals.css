@@ -1,35 +1,142 @@
+/* BioLit console design tokens.
+ *
+ * Instrument aesthetic: warm paper ground, near-black ink, one cobalt accent,
+ * mono for all quantitative data. Light and dark both first-class.
+ *
+ * Consumed two ways:
+ *   1. Directly via var(--token) in component inline styles (EvidenceTrail, DeltaBar).
+ *   2. Mapped into Tailwind via theme.extend.colors in tailwind.config.
+ *
+ * Dark mode: set data-theme="dark" on <html> (and .dark for Tailwind), or prefer-color-scheme.
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --surface-page: #f4f5f7;
-  --surface-card: #ffffff;
-  --surface-inset: #eef0f3;
-  --border: #d8dce3;
-  --ink: #12151a;
-  --ink-secondary: #3d4450;
-  --ink-muted: #6b7380;
-  --accent: #1f5eff;
-  --accent-soft: #e8efff;
-  --success: #0f7a45;
-  --danger: #c0362c;
-  --warning: #a15c00;
+  /* surfaces */
+  --bg: #faf9f5;
+  --card: #ffffff;
+  --inset: #f1efe9;
+
+  /* ink */
+  --ink: #1a1917;
+  --ink-2: #5f5e58;
+  --ink-3: #908e85;
+
+  /* borders */
+  --border: rgba(26, 25, 23, 0.1);
+  --border-strong: rgba(26, 25, 23, 0.2);
+
+  /* accent — cobalt */
+  --accent: #1f5fa8;
+  --accent-fill: #1f5fa8;
+  --accent-on: #ffffff;
+  --accent-bg: #e6f0fb;
+  --accent-border: #9fc2e8;
+
+  /* semantic */
+  --success: #0f6e56;
+  --success-fill: #1d9e75;
+  --success-bg: #e1f5ee;
+  --success-border: #8fd9c1;
+
+  --danger: #a32d2d;
+  --danger-fill: #d85a30;
+  --danger-bg: #fcebeb;
+  --danger-border: #f0a0a0;
+
+  --warning: #854f0b;
+  --warning-fill: #ba7517;
+  --warning-bg: #faeeda;
+  --warning-border: #e7c67c;
+
+  /* geometry */
+  --radius: 8px;
+  --radius-card: 12px;
+
+  /* focus */
+  --focus-ring: 0 0 0 2px var(--accent-bg), 0 0 0 3px var(--accent-border);
+
+  /* Tailwind aliases (stable class names) */
+  --surface-page: var(--bg);
+  --surface-card: var(--card);
+  --surface-inset: var(--inset);
+  --ink-secondary: var(--ink-2);
+  --ink-muted: var(--ink-3);
+  --accent-soft: var(--accent-bg);
 }
 
+:root[data-theme="dark"],
 .dark {
-  --surface-page: #0e1014;
-  --surface-card: #161a21;
-  --surface-inset: #1c212b;
-  --border: #2a3140;
-  --ink: #e8eaef;
-  --ink-secondary: #b4bac6;
-  --ink-muted: #7e8696;
-  --accent: #5b8cff;
-  --accent-soft: #1a2744;
-  --success: #3dba75;
-  --danger: #e05a50;
-  --warning: #e0a04a;
+  --bg: #131311;
+  --card: #1e1d1a;
+  --inset: #201f1b;
+
+  --ink: #ecebe4;
+  --ink-2: #a5a29a;
+  --ink-3: #74716a;
+
+  --border: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.22);
+
+  --accent: #7aabe6;
+  --accent-fill: #2f6fb5;
+  --accent-on: #ffffff;
+  --accent-bg: rgba(31, 95, 168, 0.2);
+  --accent-border: rgba(122, 171, 230, 0.42);
+
+  --success: #6bcea9;
+  --success-fill: #1d9e75;
+  --success-bg: rgba(29, 158, 117, 0.18);
+  --success-border: rgba(107, 206, 169, 0.42);
+
+  --danger: #e88c8c;
+  --danger-fill: #d85a30;
+  --danger-bg: rgba(163, 45, 45, 0.22);
+  --danger-border: rgba(232, 140, 140, 0.42);
+
+  --warning: #e0b266;
+  --warning-fill: #ba7517;
+  --warning-bg: rgba(133, 79, 11, 0.24);
+  --warning-border: rgba(224, 178, 102, 0.42);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not(.light) {
+    --bg: #131311;
+    --card: #1e1d1a;
+    --inset: #201f1b;
+
+    --ink: #ecebe4;
+    --ink-2: #a5a29a;
+    --ink-3: #74716a;
+
+    --border: rgba(255, 255, 255, 0.12);
+    --border-strong: rgba(255, 255, 255, 0.22);
+
+    --accent: #7aabe6;
+    --accent-fill: #2f6fb5;
+    --accent-on: #ffffff;
+    --accent-bg: rgba(31, 95, 168, 0.2);
+    --accent-border: rgba(122, 171, 230, 0.42);
+
+    --success: #6bcea9;
+    --success-fill: #1d9e75;
+    --success-bg: rgba(29, 158, 117, 0.18);
+    --success-border: rgba(107, 206, 169, 0.42);
+
+    --danger: #e88c8c;
+    --danger-fill: #d85a30;
+    --danger-bg: rgba(163, 45, 45, 0.22);
+    --danger-border: rgba(232, 140, 140, 0.42);
+
+    --warning: #e0b266;
+    --warning-fill: #ba7517;
+    --warning-bg: rgba(133, 79, 11, 0.24);
+    --warning-border: rgba(224, 178, 102, 0.42);
+  }
 }
 
 html,
@@ -38,15 +145,38 @@ body {
 }
 
 body {
-  background: var(--surface-page);
+  background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 * {
   border-color: var(--border);
+}
+
+::selection {
+  background: var(--accent-bg);
+}
+
+/* All quantitative fields render in mono. */
+.data,
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.strong {
+  font-weight: 500;
+}
+
+:where(input, select, textarea, button):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 @layer utilities {

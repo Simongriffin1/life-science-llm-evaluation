@@ -22,17 +22,35 @@ const config: Config = {
         accent: {
           DEFAULT: "var(--accent)",
           soft: "var(--accent-soft)",
+          fill: "var(--accent-fill)",
+          on: "var(--accent-on)",
+          border: "var(--accent-border)",
         },
-        success: "var(--success)",
-        danger: "var(--danger)",
-        warning: "var(--warning)",
+        success: {
+          DEFAULT: "var(--success)",
+          fill: "var(--success-fill)",
+          bg: "var(--success-bg)",
+          border: "var(--success-border)",
+        },
+        danger: {
+          DEFAULT: "var(--danger)",
+          fill: "var(--danger-fill)",
+          bg: "var(--danger-bg)",
+          border: "var(--danger-border)",
+        },
+        warning: {
+          DEFAULT: "var(--warning)",
+          fill: "var(--warning-fill)",
+          bg: "var(--warning-bg)",
+          border: "var(--warning-border)",
+        },
       },
       fontFamily: {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
       borderRadius: {
-        card: "12px",
+        card: "var(--radius-card)",
       },
       fontWeight: {
         normal: "400",

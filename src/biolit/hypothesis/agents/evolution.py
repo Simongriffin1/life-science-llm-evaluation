@@ -5,8 +5,12 @@ from __future__ import annotations
 from uuid import uuid4
 
 from biolit.core.llm import complete
+from biolit.core.logging import get_logger
+from biolit.hypothesis.convert import try_parse_to_draft
 from biolit.hypothesis.json_utils import extract_json_array
 from biolit.hypothesis.models import EvidenceRef, HypothesisConfig, HypothesisDraft
+
+logger = get_logger(__name__)
 
 
 async def evolve(
@@ -53,6 +57,7 @@ async def evolve(
     for p in parents:
         for e in p.evidence:
             by_pmid[e.pmid] = e
+    allowed = set(by_pmid.keys())
 
     offspring: list[HypothesisDraft] = []
     for item in raw_items:
@@ -65,18 +70,33 @@ async def evolve(
             evidence = list(parents[0].evidence[:2])
         if not evidence:
             continue
+        statement = str(item.get("statement") or "").strip()
+        if not statement:
+            continue
         parent_ids = item.get("parent_ids") or [parents[0].id]
-        offspring.append(
-            HypothesisDraft(
-                id=str(uuid4()),
-                statement=str(item.get("statement") or "").strip(),
-                mechanism=str(item.get("mechanism") or "") or None,
-                experiment=str(item.get("experiment") or "") or None,
-                falsification=str(item.get("falsification") or "") or None,
-                generation=generation,
-                parent_id=str(parent_ids[0]) if parent_ids else parents[0].id,
-                evidence=evidence,
-                unvalidated_lead=True,
+        raw = {
+            "id": str(uuid4()),
+            "statement": statement,
+            "rationale": str(item.get("rationale") or "").strip() or statement,
+            "mechanism": str(item.get("mechanism") or "").strip() or "To be refined.",
+            "experiment": str(item.get("experiment") or "").strip() or "To be specified.",
+            "falsification": str(item.get("falsification") or "").strip()
+            or "Observation that would refute the claim.",
+            "novelty": 0.5,
+            "feasibility": 0.5,
+            "generation": generation,
+            "parent_id": str(parent_ids[0]) if parent_ids else parents[0].id,
+            "evidence": [
+                {"pmid": e.pmid, "snippet": e.snippet, "stance": e.stance} for e in evidence
+            ],
+            "unvalidated_lead": True,
+        }
+        draft = try_parse_to_draft(raw, retrieved_pmids=allowed, draft_status="active")
+        if draft is None:
+            logger.warning(
+                "hypothesis.evolve_schema_rejected",
+                extra={"statement": statement[:120]},
             )
-        )
-    return [o for o in offspring if o.statement and o.has_provenance()]
+            continue
+        offspring.append(draft)
+    return offspring

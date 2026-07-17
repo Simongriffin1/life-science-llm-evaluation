@@ -11,10 +11,13 @@ from langgraph.types import Command
 from biolit.core.db import Hypothesis, HypothesisRun, TournamentMatch, get_session_factory
 from biolit.core.llm import track_token_usage
 from biolit.core.logging import get_logger
+from biolit.hypothesis.convert import draft_to_hypothesis
 from biolit.hypothesis.feedback import ReviewDecision
 from biolit.hypothesis.graph import build_hypothesis_graph, thread_config
 from biolit.hypothesis.models import HypothesisConfig, HypothesisDraft, HypothesisRunResult
 from biolit.hypothesis.provenance import enforce_cite_only, persist_evidence, require_provenance
+from biolit.hypothesis.schemas import MetaReviewOutput
+from biolit.hypothesis.schemas import enforce_cite_only as schema_cite_only
 
 logger = get_logger(__name__)
 
@@ -130,11 +133,22 @@ async def _finalize_completed(
     for p in proposals:
         if not p.has_provenance():
             raise RuntimeError(f"Proposal {p.id} missing evidence")
-        if not p.unvalidated_lead:
+        try:
+            schema_hyp = draft_to_hypothesis(p)
+        except Exception as exc:
+            raise RuntimeError(f"Proposal {p.id} failed schema validation: {exc}") from exc
+        if schema_hyp.unvalidated_lead is not True:
             raise RuntimeError(f"Proposal {p.id} missing unvalidated_lead=true")
-        illegal = sorted(p.cited_pmids() - allowed)
+        illegal = schema_cite_only(schema_hyp, allowed)
         if illegal:
             raise RuntimeError(f"Proposal {p.id} cites non-retrieved PMIDs: {illegal}")
+
+    if proposals:
+        MetaReviewOutput(
+            research_goal=research_goal,
+            proposals=[draft_to_hypothesis(p) for p in proposals],
+            unvalidated_lead=True,
+        )
 
     budget = dict(final.get("budget_used") or {})
     budget["n_matches"] = len(final.get("matches") or [])

@@ -1,10 +1,35 @@
 ---
-description: Hypothesis subsystem
+description: Hypothesis subsystem — cite-only enforced at the schema level
 globs: ["src/biolit/hypothesis/**"]
 alwaysApply: false
 ---
-- LangGraph state machine: generation -> reflection -> ranking(Elo tournament) -> evolution -> (rank) ... -> meta-review.
-- Generation may only assert claims it can cite; ground every seed with a retrieval call.
-- Ranking is pairwise with an LLM judge; update Elo. Dedup near-duplicates before ranking.
-- Meta-review outputs proposals with mechanism, experiment, explicit falsification criterion, evidence trail.
-- Mandatory provenance: persist evidence rows (pmid, snippet, stance) for every hypothesis.
+
+# Hypothesis engine rules
+
+## Architecture
+- LangGraph state machine: generation -> reflection -> ranking (Elo tournament) -> evolution -> (rank) ... -> meta-review.
+- Ranking is pairwise with an LLM judge; update Elo. Dedup near-duplicates (proximity) before ranking.
+- Meta-review outputs proposals, each with: mechanism, a concrete experiment, an explicit falsification criterion, and the evidence trail.
+- When `config.interactive` is true, pause after each rank/evolve round in a resumable checkpoint for human accept / reject / redirect (see 7d).
+
+## Provenance is structural, not advisory
+- All hypotheses and proposals MUST be instances of `biolit.hypothesis.schemas.Hypothesis`. Do not build ad-hoc dicts and persist them.
+- `Hypothesis` guarantees, by construction: at least one `Evidence` item, a non-empty `falsification`, and `unvalidated_lead = True`. Do not weaken, override, or bypass these fields.
+- Never introduce a code path that persists a hypothesis without evidence. "No provenance, no hypothesis" is enforced by the schema; keep it that way.
+
+## Cite-only (hard rule)
+- The generation and evolution agents may only assert claims backed by retrieved documents. Every seed and every mutation is grounded by a `biolit.retrieval.service` call first.
+- Parse model output through `schemas.parse_hypothesis(raw, retrieved_pmids=<set from that retrieval call>)`. This raises if any citation is outside the retrieved set. Do not catch-and-ignore that error; a stray citation means the hypothesis is dropped and logged.
+- Before persistence, guard with `schemas.enforce_cite_only(hyp, retrieved_pmids)`. A non-empty return list means reject the hypothesis. Never store it and never "repair" it by adding the stray PMID to the retrieved set.
+- The retrieved set for a hypothesis is the union of PMIDs surfaced by the retrieval calls that grounded it. Track it per hypothesis; do not use a global allowlist.
+
+## Labeling
+- Every API response and export that contains hypotheses carries `unvalidated_lead: true` at the item level. Do not strip it in serializers.
+- Meta-review output is `schemas.MetaReviewOutput`; it also pins `unvalidated_lead`.
+
+## Safety, proportionate
+- Keep the human gate as the primary control. A lightweight sensitive-topic screen on the research goal and on final proposals is fine; a heavy classifier is over-engineering for hypotheses over public PubMed.
+- Do not present output as validated, ranked-therefore-true, or experimentally confirmed. Elo ranks preference under an LLM judge, nothing more.
+
+## Definition of done
+- Code + tests + a runnable check. Tests must include: a hypothesis missing evidence fails validation; a hypothesis citing an out-of-set PMID fails `parse_hypothesis`; `enforce_cite_only` returns the stray PMIDs; a valid hypothesis round-trips through persistence with its evidence intact.

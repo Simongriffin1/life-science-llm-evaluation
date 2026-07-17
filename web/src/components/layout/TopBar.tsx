@@ -3,6 +3,13 @@
 import { useEffect, useState } from "react";
 import { useHealth } from "@/lib/useHealth";
 
+function applyTheme(isDark: boolean) {
+  const root = document.documentElement;
+  root.classList.toggle("dark", isDark);
+  root.classList.toggle("light", !isDark);
+  root.dataset.theme = isDark ? "dark" : "light";
+}
+
 export function TopBar() {
   const { health } = useHealth();
   const [dark, setDark] = useState(false);
@@ -13,13 +20,13 @@ export function TopBar() {
       stored === "dark" ||
       (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
     setDark(preferDark);
-    document.documentElement.classList.toggle("dark", preferDark);
+    applyTheme(preferDark);
   }, []);
 
   const toggleTheme = () => {
     const next = !dark;
     setDark(next);
-    document.documentElement.classList.toggle("dark", next);
+    applyTheme(next);
     window.localStorage.setItem("biolit-theme", next ? "dark" : "light");
   };
 

@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from biolit.core.llm import complete
 from biolit.core.logging import get_logger
+from biolit.hypothesis.convert import try_parse_to_draft
 from biolit.hypothesis.json_utils import extract_json_array
 from biolit.hypothesis.models import EvidenceRef, HypothesisConfig, HypothesisDraft
 from biolit.hypothesis.provenance import evidence_from_retrieval, upsert_documents
@@ -91,20 +92,33 @@ async def generate_seeds(
             evidence = list(default_evidence[:2])
         if not evidence:
             continue
-        drafts.append(
-            HypothesisDraft(
-                id=str(uuid4()),
-                statement=str(item.get("statement") or "").strip(),
-                rationale=str(item.get("rationale") or "") or None,
-                mechanism=str(item.get("mechanism") or "") or None,
-                experiment=str(item.get("experiment") or "") or None,
-                falsification=str(item.get("falsification") or "") or None,
-                generation=0,
-                evidence=evidence,
-                unvalidated_lead=True,
+        statement = str(item.get("statement") or "").strip()
+        if not statement:
+            continue
+        raw = {
+            "id": str(uuid4()),
+            "statement": statement,
+            "rationale": str(item.get("rationale") or "").strip() or statement,
+            "mechanism": str(item.get("mechanism") or "").strip() or "To be refined.",
+            "experiment": str(item.get("experiment") or "").strip() or "To be specified.",
+            "falsification": str(item.get("falsification") or "").strip()
+            or "Observation that would refute the claim.",
+            "novelty": 0.5,
+            "feasibility": 0.5,
+            "generation": 0,
+            "evidence": [
+                {"pmid": e.pmid, "snippet": e.snippet, "stance": e.stance} for e in evidence
+            ],
+            "unvalidated_lead": True,
+        }
+        draft = try_parse_to_draft(raw, retrieved_pmids=allowed, draft_status="active")
+        if draft is None:
+            logger.warning(
+                "hypothesis.generate_schema_rejected",
+                extra={"statement": statement[:120]},
             )
-        )
+            continue
+        drafts.append(draft)
 
-    drafts = [d for d in drafts if d.statement and d.has_provenance()]
     logger.info("hypothesis.generated", extra={"n": len(drafts)})
     return drafts, docs

@@ -8,7 +8,9 @@ from sqlalchemy.dialects.postgresql import insert
 
 from biolit.core.db import Document, Evidence, get_session_factory
 from biolit.core.logging import get_logger
+from biolit.hypothesis.convert import draft_to_hypothesis
 from biolit.hypothesis.models import EvidenceRef, HypothesisDraft, Stance
+from biolit.hypothesis.schemas import enforce_cite_only as schema_enforce_cite_only
 from biolit.ingest.models import PubMedDocument
 
 logger = get_logger(__name__)
@@ -107,11 +109,17 @@ def enforce_cite_only(
 
     When ``strict`` is True (default), illegal citations fail closed.
     Always stamps ``unvalidated_lead=True`` on kept drafts.
+    PMID checks go through ``schemas.enforce_cite_only`` as the source of truth.
     """
     allowed = {str(p) for p in allowed_pmids}
     kept: list[HypothesisDraft] = []
     for h in hypotheses:
-        illegal = sorted({e.pmid for e in h.evidence if e.pmid not in allowed})
+        try:
+            schema_hyp = draft_to_hypothesis(h)
+            illegal = schema_enforce_cite_only(schema_hyp, allowed)
+        except Exception:
+            # Incomplete drafts still get a PMID-level check without schema coercion.
+            illegal = sorted({e.pmid for e in h.evidence if e.pmid not in allowed})
         if illegal:
             if strict:
                 raise CiteOnlyViolation(h.id, illegal)

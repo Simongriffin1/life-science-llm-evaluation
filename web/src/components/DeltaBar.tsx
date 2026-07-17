@@ -1,47 +1,123 @@
-type Props = {
+import * as React from "react";
+
+/**
+ * DeltaBar visualizes a model's closed-book score and its retrieval-augmented
+ * score as a single bar: a neutral base up to the lower of the two, then a
+ * colored segment for the difference. Positive delta (RAG helps) reads success;
+ * negative delta (RAG hurts) reads danger. The right-hand readouts show the RAG
+ * score and the signed delta in mono.
+ */
+
+export interface DeltaBarProps {
+  label: string;
   closed: number;
   rag: number;
-  label?: string;
-};
+  max?: number;
+  className?: string;
+}
 
-/** Closed-book base + retrieval-gain (or loss) segment. */
-export function DeltaBar({ closed, rag, label }: Props) {
-  const closedPct = Math.max(0, Math.min(100, closed * 100));
-  const delta = rag - closed;
-  const gainPct = Math.max(0, Math.min(100 - closedPct, delta * 100));
-  const lossPct = Math.max(0, Math.min(closedPct, -delta * 100));
+const clamp = (n: number, max: number): number => Math.max(0, Math.min(max, n));
+const fmt = (n: number): string => n.toFixed(2);
+
+export function DeltaBar({
+  label,
+  closed,
+  rag,
+  max = 1,
+  className,
+}: DeltaBarProps): React.ReactElement {
+  const c = clamp(closed, max);
+  const r = clamp(rag, max);
+  const base = Math.min(c, r);
+  const delta = r - c;
+  const gain = delta >= 0;
+
+  const basePct = (base / max) * 100;
+  const deltaPct = (Math.abs(delta) / max) * 100;
+  const sign = gain ? "+" : "\u2212";
 
   return (
-    <div className="space-y-1">
-      {label ? <div className="text-xs text-ink-muted">{label}</div> : null}
-      <div className="flex h-2 w-full overflow-hidden rounded border border-border bg-inset">
+    <div
+      className={className}
+      style={{ display: "flex", alignItems: "center", gap: 8 }}
+    >
+      <span
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          width: 104,
+          color: "var(--ink-2)",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          flexShrink: 0,
+        }}
+        title={label}
+      >
+        {label}
+      </span>
+
+      <div
+        style={{
+          flex: 1,
+          height: 16,
+          background: "var(--inset)",
+          borderRadius: 4,
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
         <div
-          className="h-full bg-ink-muted/40"
-          style={{ width: `${closedPct - lossPct}%` }}
-          title={`Closed ${closed.toFixed(2)}`}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: `${basePct}%`,
+            background: "var(--border-strong)",
+          }}
         />
-        {delta >= 0 ? (
-          <div
-            className="h-full bg-success"
-            style={{ width: `${gainPct}%` }}
-            title={`Δrag +${delta.toFixed(2)}`}
-          />
-        ) : (
-          <div
-            className="h-full bg-danger"
-            style={{ width: `${lossPct}%` }}
-            title={`Δrag ${delta.toFixed(2)}`}
-          />
-        )}
+        <div
+          style={{
+            position: "absolute",
+            left: `${basePct}%`,
+            top: 0,
+            bottom: 0,
+            width: `${deltaPct}%`,
+            background: gain ? "var(--success-fill)" : "var(--danger)",
+          }}
+        />
       </div>
-      <div className="flex justify-between font-mono text-xs text-ink-secondary">
-        <span>cb {closed.toFixed(2)}</span>
-        <span className={delta >= 0 ? "text-success" : "text-danger"}>
-          Δ {delta >= 0 ? "+" : ""}
-          {delta.toFixed(2)}
-        </span>
-        <span>rag {rag.toFixed(2)}</span>
-      </div>
+
+      <span
+        className="data"
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          width: 40,
+          textAlign: "right",
+          color: "var(--ink)",
+          flexShrink: 0,
+        }}
+      >
+        {fmt(r)}
+      </span>
+      <span
+        className="data"
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: 11,
+          width: 52,
+          textAlign: "right",
+          color: gain ? "var(--success)" : "var(--danger)",
+          flexShrink: 0,
+        }}
+      >
+        {sign}
+        {fmt(Math.abs(delta))}
+      </span>
     </div>
   );
 }
+
+export default DeltaBar;

@@ -1,16 +1,17 @@
 type Stance = "supports" | "contradicts" | "context" | string;
 
-const STYLES: Record<string, string> = {
-  supports: "border-success text-success",
-  contradicts: "border-danger text-danger",
-  context: "border-ink-muted text-ink-muted",
+const STYLES: Record<string, { color: string; bg: string }> = {
+  supports: { color: "var(--success)", bg: "var(--success-bg)" },
+  contradicts: { color: "var(--danger)", bg: "var(--danger-bg)" },
+  context: { color: "var(--ink-2)", bg: "var(--inset)" },
 };
 
 export function StanceChip({ stance }: { stance: Stance }) {
-  const cls = STYLES[stance] || STYLES.context;
+  const s = STYLES[stance] || STYLES.context;
   return (
     <span
-      className={`inline-flex rounded border px-1.5 py-0.5 text-xs font-medium capitalize ${cls}`}
+      className="inline-flex rounded px-1.5 py-0.5 font-mono text-xs font-medium"
+      style={{ color: s.color, background: s.bg }}
     >
       {stance}
     </span>
