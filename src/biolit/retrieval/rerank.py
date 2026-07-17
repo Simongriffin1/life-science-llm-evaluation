@@ -47,7 +47,7 @@ class MedCPTCrossEncoderBackend:
         )
         from biolit.retrieval.torch_compat import from_pretrained_medcpt
 
-        self._tokenizer = AutoTokenizer.from_pretrained(CROSS_ENCODER_ID)  # type: ignore[no-untyped-call]
+        self._tokenizer = AutoTokenizer.from_pretrained(CROSS_ENCODER_ID)  # type: ignore[no-untyped-call,unused-ignore]
         self._model = from_pretrained_medcpt(AutoModelForSequenceClassification, CROSS_ENCODER_ID)
 
         if self.device.startswith("cuda") and not torch.cuda.is_available():

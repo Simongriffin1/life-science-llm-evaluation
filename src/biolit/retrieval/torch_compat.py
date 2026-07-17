@@ -25,9 +25,9 @@ def from_pretrained_medcpt(loader: Any, model_id: str, **kwargs: Any) -> Any:
 
     previous = getattr(modeling_utils, "check_torch_load_is_safe", None)
     if previous is not None:
-        modeling_utils.check_torch_load_is_safe = lambda: None  # type: ignore[attr-defined]
+        modeling_utils.check_torch_load_is_safe = lambda: None  # type: ignore[attr-defined,unused-ignore]
     try:
         return loader.from_pretrained(model_id, **kwargs)
     finally:
         if previous is not None:
-            modeling_utils.check_torch_load_is_safe = previous  # type: ignore[attr-defined]
+            modeling_utils.check_torch_load_is_safe = previous  # type: ignore[attr-defined,unused-ignore]

@@ -59,9 +59,9 @@ class MedCPTBackend:
         )
         from biolit.retrieval.torch_compat import from_pretrained_medcpt
 
-        self._query_tokenizer = AutoTokenizer.from_pretrained(QUERY_ENCODER_ID)  # type: ignore[no-untyped-call]
+        self._query_tokenizer = AutoTokenizer.from_pretrained(QUERY_ENCODER_ID)  # type: ignore[no-untyped-call,unused-ignore]
         self._query_model = from_pretrained_medcpt(AutoModel, QUERY_ENCODER_ID)
-        self._article_tokenizer = AutoTokenizer.from_pretrained(ARTICLE_ENCODER_ID)  # type: ignore[no-untyped-call]
+        self._article_tokenizer = AutoTokenizer.from_pretrained(ARTICLE_ENCODER_ID)  # type: ignore[no-untyped-call,unused-ignore]
         self._article_model = from_pretrained_medcpt(AutoModel, ARTICLE_ENCODER_ID)
 
         if self.device.startswith("cuda") and not torch.cuda.is_available():
