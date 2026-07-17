@@ -28,6 +28,25 @@ services:
       timeout: 3s
       retries: 10
 
+  worker:
+    image: ghcr.io/astral-sh/uv:python3.11-bookworm
+    container_name: biolit-worker
+    working_dir: /app
+    command: ["uv", "run", "arq", "biolit.worker.settings.WorkerSettings"]
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://biolit:biolit@postgres:5432/biolit
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
   # Langfuse v2 single-container stack for local tracing (optional; API works without it).
   langfuse-db:
     image: postgres:16-alpine

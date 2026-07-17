@@ -1,0 +1,237 @@
+[
+  {
+    "id": "clean_delimiter_mcqa",
+    "raw": "Reasoning.\nThe answer is (B)",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": "B",
+    "unparsed": false
+  },
+  {
+    "id": "clean_delimiter_ynm",
+    "raw": "I conclude.\nThe answer is (yes)",
+    "options": {
+      "yes": "yes",
+      "no": "no",
+      "maybe": "maybe"
+    },
+    "expected": "yes",
+    "unparsed": false
+  },
+  {
+    "id": "delimiter_no_parens",
+    "raw": "Done.\nThe answer is C",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": "C",
+    "unparsed": false
+  },
+  {
+    "id": "verbose_then_delimiter",
+    "raw": "Long chain of thought about kidneys and electrolytes...\nTherefore the best choice is clear.\nThe answer is (A)",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": "A",
+    "unparsed": false
+  },
+  {
+    "id": "multiple_delimiter_last_wins",
+    "raw": "The answer is (A)\nWait, reconsidering.\nThe answer is (D)",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": "D",
+    "unparsed": false
+  },
+  {
+    "id": "last_standalone_letter",
+    "raw": "Considering options carefully.\nB",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": "B",
+    "unparsed": false
+  },
+  {
+    "id": "last_standalone_ynm",
+    "raw": "Uncertain literature.\nmaybe",
+    "options": {
+      "yes": "yes",
+      "no": "no",
+      "maybe": "maybe"
+    },
+    "expected": "maybe",
+    "unparsed": false
+  },
+  {
+    "id": "option_text_match",
+    "raw": "After review my choice is two",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": "B",
+    "unparsed": false
+  },
+  {
+    "id": "leading_letter_line",
+    "raw": "Conclusion\nA) one",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": "A",
+    "unparsed": false
+  },
+  {
+    "id": "lowercase_letter",
+    "raw": "The answer is (c)",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": "C",
+    "unparsed": false
+  },
+  {
+    "id": "refusal_unparsed",
+    "raw": "I cannot answer medical questions.",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": null,
+    "unparsed": true
+  },
+  {
+    "id": "malformed_gibberish",
+    "raw": "asdf qwer zxcv",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": null,
+    "unparsed": true
+  },
+  {
+    "id": "empty_unparsed",
+    "raw": "",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": null,
+    "unparsed": true
+  },
+  {
+    "id": "wrong_letter_out_of_set",
+    "raw": "The answer is (Z)",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": null,
+    "unparsed": true
+  },
+  {
+    "id": "ambiguous_two_keys",
+    "raw": "Could be A or B depending.",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": null,
+    "unparsed": true
+  },
+  {
+    "id": "answer_legacy_ignored_unless_delim",
+    "raw": "I decline to provide a selection for this item.",
+    "options": {
+      "yes": "yes",
+      "no": "no",
+      "maybe": "maybe"
+    },
+    "expected": null,
+    "unparsed": true
+  },
+  {
+    "id": "delimiter_maybe",
+    "raw": "Soft evidence.\nThe answer is (maybe)",
+    "options": {
+      "yes": "yes",
+      "no": "no",
+      "maybe": "maybe"
+    },
+    "expected": "maybe",
+    "unparsed": false
+  },
+  {
+    "id": "delimiter_no",
+    "raw": "Contradicts claim.\nThe answer is (no)",
+    "options": {
+      "yes": "yes",
+      "no": "no",
+      "maybe": "maybe"
+    },
+    "expected": "no",
+    "unparsed": false
+  },
+  {
+    "id": "markdown_fence_around",
+    "raw": "```\nThe answer is (D)\n```",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": "D",
+    "unparsed": false
+  },
+  {
+    "id": "trailing_noise_after_delim",
+    "raw": "The answer is (A)\nHope that helps!",
+    "options": {
+      "A": "one",
+      "B": "two",
+      "C": "three",
+      "D": "four"
+    },
+    "expected": "A",
+    "unparsed": false
+  }
+]

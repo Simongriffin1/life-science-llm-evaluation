@@ -6,6 +6,7 @@ import asyncio
 from typing import Any, Protocol
 
 import numpy as np
+from numpy.typing import NDArray
 
 from biolit.core.config import get_settings
 from biolit.core.logging import get_logger
@@ -21,9 +22,9 @@ ARTICLE_ENCODER_ID = "ncbi/MedCPT-Article-Encoder"
 class DenseBackend(Protocol):
     """Encodable backend used by dense ranking (real MedCPT or test double)."""
 
-    def encode_query(self, query: str) -> np.ndarray: ...
+    def encode_query(self, query: str) -> NDArray[np.floating[Any]]: ...
 
-    def encode_articles(self, texts: list[str]) -> np.ndarray: ...
+    def encode_articles(self, texts: list[str]) -> NDArray[np.floating[Any]]: ...
 
 
 class MedCPTBackend:
@@ -58,9 +59,9 @@ class MedCPTBackend:
         )
         from biolit.retrieval.torch_compat import from_pretrained_medcpt
 
-        self._query_tokenizer = AutoTokenizer.from_pretrained(QUERY_ENCODER_ID)
+        self._query_tokenizer = AutoTokenizer.from_pretrained(QUERY_ENCODER_ID)  # type: ignore[no-untyped-call]
         self._query_model = from_pretrained_medcpt(AutoModel, QUERY_ENCODER_ID)
-        self._article_tokenizer = AutoTokenizer.from_pretrained(ARTICLE_ENCODER_ID)
+        self._article_tokenizer = AutoTokenizer.from_pretrained(ARTICLE_ENCODER_ID)  # type: ignore[no-untyped-call]
         self._article_model = from_pretrained_medcpt(AutoModel, ARTICLE_ENCODER_ID)
 
         if self.device.startswith("cuda") and not torch.cuda.is_available():
@@ -72,7 +73,7 @@ class MedCPTBackend:
         self._loaded = True
         logger.info("MedCPT encoders ready")
 
-    def encode_query(self, query: str) -> np.ndarray:
+    def encode_query(self, query: str) -> NDArray[np.floating[Any]]:
         self._ensure_loaded_sync()
         import torch
 
@@ -91,7 +92,7 @@ class MedCPTBackend:
             emb = torch.nn.functional.normalize(emb, p=2, dim=1)
             return np.asarray(emb.cpu().numpy()[0], dtype=np.float32)
 
-    def encode_articles(self, texts: list[str]) -> np.ndarray:
+    def encode_articles(self, texts: list[str]) -> NDArray[np.floating[Any]]:
         self._ensure_loaded_sync()
         if not texts:
             return np.zeros((0, 768), dtype=np.float32)

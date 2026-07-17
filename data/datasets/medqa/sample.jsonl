@@ -1,0 +1,20 @@
+{"id": "medqa-000", "question": "Which electrolyte abnormality is most associated with loop diuretics?", "options": {"A": "Hyperkalemia", "B": "Hypokalemia", "C": "Hypermagnesemia", "D": "Hypercalcemia"}, "answer": "B"}
+{"id": "medqa-001", "question": "A positive Kernig sign suggests:", "options": {"A": "Appendicitis", "B": "Meningeal irritation", "C": "Deep vein thrombosis", "D": "Cholecystitis"}, "answer": "B"}
+{"id": "medqa-002", "question": "Warfarin anticoagulation is monitored with:", "options": {"A": "aPTT", "B": "INR", "C": "Bleeding time", "D": "Platelet count"}, "answer": "B"}
+{"id": "medqa-003", "question": "Most common cause of community-acquired pneumonia in adults:", "options": {"A": "S. aureus", "B": "S. pneumoniae", "C": "P. aeruginosa", "D": "Mycoplasma only"}, "answer": "B"}
+{"id": "medqa-004", "question": "ACE inhibitors are contraindicated in:", "options": {"A": "Diabetes", "B": "Bilateral renal artery stenosis", "C": "Heart failure", "D": "Hypertension"}, "answer": "B"}
+{"id": "medqa-005", "question": "Which hormone increases blood glucose?", "options": {"A": "Insulin", "B": "Glucagon", "C": "Somatostatin", "D": "GLP-1"}, "answer": "B"}
+{"id": "medqa-006", "question": "Cushing disease is due to excess:", "options": {"A": "ACTH from pituitary", "B": "ADH", "C": "Aldosterone alone", "D": "PTH"}, "answer": "A"}
+{"id": "medqa-007", "question": "First-line for acute gout flare (no contraindication):", "options": {"A": "Allopurinol", "B": "NSAIDs", "C": "Probenecid", "D": "Febuxostat"}, "answer": "B"}
+{"id": "medqa-008", "question": "Which valve is affected in rheumatic heart disease most often?", "options": {"A": "Aortic", "B": "Mitral", "C": "Tricuspid", "D": "Pulmonary"}, "answer": "B"}
+{"id": "medqa-009", "question": "TB screening IGRA measures:", "options": {"A": "Antibody titer", "B": "T-cell interferon response", "C": "Sputum AFB", "D": "Chest x-ray infiltrate"}, "answer": "B"}
+{"id": "medqa-010", "question": "Metformin major serious adverse effect:", "options": {"A": "Lactic acidosis", "B": "Ototoxicity", "C": "Agranulocytosis", "D": "Tendon rupture"}, "answer": "A"}
+{"id": "medqa-011", "question": "Parkinson disease primary neurotransmitter deficit:", "options": {"A": "Acetylcholine", "B": "Dopamine", "C": "Serotonin", "D": "GABA"}, "answer": "B"}
+{"id": "medqa-012", "question": "Most specific test for myocardial infarction early:", "options": {"A": "Myoglobin", "B": "Troponin", "C": "LDH", "D": "AST"}, "answer": "B"}
+{"id": "medqa-013", "question": "SIADH typically presents with:", "options": {"A": "Hypernatremia", "B": "Hyponatremia", "C": "Hyperkalemia", "D": "Hypoglycemia"}, "answer": "B"}
+{"id": "medqa-014", "question": "Which antibiotic covers MRSA orally?", "options": {"A": "Amoxicillin", "B": "Linezolid", "C": "Ceftriaxone", "D": "Aztreonam"}, "answer": "B"}
+{"id": "medqa-015", "question": "Addison disease features:", "options": {"A": "Hypertension and hypernatremia", "B": "Hypotension and hyperkalemia", "C": "Hyperglycemia only", "D": "Polycythemia"}, "answer": "B"}
+{"id": "medqa-016", "question": "Osteoporosis first-line pharmacologic class:", "options": {"A": "Bisphosphonates", "B": "Calcitonin alone", "C": "Loop diuretics", "D": "Thiazolidinediones"}, "answer": "A"}
+{"id": "medqa-017", "question": "H. pylori triple therapy historically includes:", "options": {"A": "PPI + clarithromycin + amoxicillin", "B": "NSAID + steroid", "C": "Insulin + metformin", "D": "Warfarin + aspirin"}, "answer": "A"}
+{"id": "medqa-018", "question": "Guillain-Barre classically follows:", "options": {"A": "Campylobacter infection", "B": "Strep throat always", "C": "Fungal pneumonia", "D": "Vitamin C deficiency"}, "answer": "A"}
+{"id": "medqa-019", "question": "Which imaging for suspected PE when CT contraindicated?", "options": {"A": "V/Q scan", "B": "Abdominal ultrasound", "C": "EEG", "D": "Bone scan"}, "answer": "A"}

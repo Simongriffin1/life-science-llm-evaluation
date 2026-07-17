@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_medcpt:
+        description: "Run optional MedCPT integration (needs HF download)"
+        type: boolean
+        default: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: biolit
+          POSTGRES_PASSWORD: biolit
+          POSTGRES_DB: biolit
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U biolit -d biolit"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+psycopg://biolit:biolit@localhost:5432/biolit
+      REDIS_URL: redis://localhost:6379/0
+      NCBI_EMAIL: ci@example.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync dependencies
+        run: uv sync --extra dev
+
+      - name: Init schema
+        run: uv run python scripts/init_schema.py
+
+      - name: Ruff check
+        run: uv run ruff check src tests scripts
+
+      - name: Ruff format
+        run: uv run ruff format --check src tests scripts
+
+      - name: Mypy
+        run: uv run mypy src
+
+      - name: Pytest (exclude live)
+        run: uv run pytest -q -m "not live"
+
+  medcpt:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_medcpt }}
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql+psycopg://biolit:biolit@localhost:5432/biolit
+      REDIS_URL: redis://localhost:6379/0
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: biolit
+          POSTGRES_PASSWORD: biolit
+          POSTGRES_DB: biolit
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U biolit -d biolit"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+      - run: uv sync --extra dev --extra retrieval
+      - run: uv run pytest -q -m medcpt

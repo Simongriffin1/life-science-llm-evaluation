@@ -110,13 +110,39 @@ def compute_run_metrics(
     groundedness_scores: list[float] | None = None,
     item_stats: list[dict[str, Any]] | None = None,
     k: int = 8,
+    few_shot_k: int = 0,
 ) -> dict[str, Any]:
-    """Aggregate metrics for one eval run."""
+    """Aggregate metrics for one eval run.
+
+    Unparsed items are excluded from accuracy / F1 (they are not counted wrong).
+    """
+    n_items = len(golds)
+    unparsed_flags: list[bool] = []
+    if item_stats is not None and len(item_stats) == n_items:
+        unparsed_flags = [bool(s.get("unparsed")) for s in item_stats]
+    else:
+        unparsed_flags = [False] * n_items
+
+    n_unparsed = sum(1 for u in unparsed_flags if u)
+    parsed_preds = [p for p, u in zip(predictions, unparsed_flags, strict=True) if not u]
+    parsed_golds = [g for g, u in zip(golds, unparsed_flags, strict=True) if not u]
+
     metrics: dict[str, Any] = {
-        "accuracy": accuracy(predictions, golds),
-        "macro_f1": macro_f1(predictions, golds),
+        "few_shot_k": few_shot_k,
+        "n_items": n_items,
+        "n_unparsed": n_unparsed,
+        "unparsed_rate": (n_unparsed / n_items) if n_items else 0.0,
         "label_counts": dict(Counter(normalize_label(g) for g in golds)),
     }
+    if parsed_golds:
+        metrics["accuracy"] = accuracy(parsed_preds, parsed_golds)
+        metrics["macro_f1"] = macro_f1(parsed_preds, parsed_golds)
+        metrics["n_parsed"] = len(parsed_golds)
+    else:
+        metrics["accuracy"] = None
+        metrics["macro_f1"] = None
+        metrics["n_parsed"] = 0
+
     if retrieved_pmids is not None and gold_pmids is not None:
         metrics["recall_at_k"] = recall_at_k(retrieved_pmids, gold_pmids, k)
         metrics["mrr"] = mrr(retrieved_pmids, gold_pmids)

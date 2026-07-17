@@ -95,3 +95,7 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+    "live: hits live NCBI and/or LLM APIs (excluded from CI by default)",
+    "medcpt: requires MedCPT / torch retrieval extra",
+]

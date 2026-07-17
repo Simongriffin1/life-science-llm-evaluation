@@ -23,9 +23,11 @@ def from_pretrained_medcpt(loader: Any, model_id: str, **kwargs: Any) -> Any:
 
     import transformers.modeling_utils as modeling_utils
 
-    previous = modeling_utils.check_torch_load_is_safe
-    modeling_utils.check_torch_load_is_safe = lambda: None
+    previous = getattr(modeling_utils, "check_torch_load_is_safe", None)
+    if previous is not None:
+        modeling_utils.check_torch_load_is_safe = lambda: None  # type: ignore[attr-defined]
     try:
         return loader.from_pretrained(model_id, **kwargs)
     finally:
-        modeling_utils.check_torch_load_is_safe = previous
+        if previous is not None:
+            modeling_utils.check_torch_load_is_safe = previous  # type: ignore[attr-defined]

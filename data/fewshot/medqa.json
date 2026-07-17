@@ -1,0 +1,52 @@
+[
+  {
+    "question": "Which vitamin deficiency causes scurvy?",
+    "options": {
+      "A": "Vitamin A",
+      "B": "Vitamin B12",
+      "C": "Vitamin C",
+      "D": "Vitamin D"
+    },
+    "gold": "C"
+  },
+  {
+    "question": "First-line therapy for anaphylaxis is:",
+    "options": {
+      "A": "Diphenhydramine",
+      "B": "Epinephrine IM",
+      "C": "Albuterol neb",
+      "D": "Methylprednisolone"
+    },
+    "gold": "B"
+  },
+  {
+    "question": "Which organism is most associated with peptic ulcers?",
+    "options": {
+      "A": "E. coli",
+      "B": "H. pylori",
+      "C": "S. aureus",
+      "D": "C. difficile"
+    },
+    "gold": "B"
+  },
+  {
+    "question": "HbA1c reflects glycemic control over approximately:",
+    "options": {
+      "A": "1 week",
+      "B": "1 month",
+      "C": "3 months",
+      "D": "1 year"
+    },
+    "gold": "C"
+  },
+  {
+    "question": "Which antibiotic class inhibits bacterial cell wall synthesis?",
+    "options": {
+      "A": "Macrolides",
+      "B": "Aminoglycosides",
+      "C": "Beta-lactams",
+      "D": "Fluoroquinolones"
+    },
+    "gold": "C"
+  }
+]

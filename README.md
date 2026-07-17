@@ -1,5 +1,7 @@
 # BioLit
 
+[![CI](https://github.com/Simongriffin1/life-science-llm-evaluation/actions/workflows/ci.yml/badge.svg)](https://github.com/Simongriffin1/life-science-llm-evaluation/actions/workflows/ci.yml)
+
 Biomedical literature **retrieval**, **LLM evaluation**, and **hypothesis generation** over a shared PubMed retrieval core.
 
 > **Responsible use:** Hypotheses are unvalidated research leads, not findings. Keep a human in the loop. Provenance (PMID + snippet + stance) is mandatory. Do not treat outputs as experimental validation.
@@ -9,9 +11,11 @@ Biomedical literature **retrieval**, **LLM evaluation**, and **hypothesis genera
 | Surface | Endpoint / UI | Purpose |
 |---|---|---|
 | Retrieval | `POST /retrieve` | Hybrid PubMed search (BM25 ± MedCPT ± rerank) with highlights |
-| Eval | `POST /eval`, `GET /eval/leaderboard` | Closed-book and RAG benchmarks (MIRAGE-family) |
-| Hypothesis | `POST /hypothesize` | Literature-grounded proposals with Elo ranking + evidence trails |
-| Dashboard | Streamlit | Thin UI over all three |
+| Eval | `POST /eval`, `GET /eval/leaderboard`, `GET /eval/runs/{id}` | Closed-book and RAG benchmarks (MIRAGE-family) |
+| Hypothesis | `POST /hypothesize`, review/resume | Literature-grounded proposals with Elo ranking + evidence trails |
+| Jobs | `GET /jobs/{id}` | arq job status for long eval / hypothesis sweeps |
+| Dashboard | Streamlit (`frontend/`) | Thin UI over all three |
+| Console | Next.js (`web/`) | Fast TypeScript console — Retrieve / Evaluate / Hypothesize |
 
 ## Setup
 
@@ -30,6 +34,8 @@ uv sync --extra dev --extra frontend --extra retrieval
 
 # 3. Infra (Docker Desktop must be running)
 docker compose up -d
+# Includes postgres, redis, and an arq `worker` service.
+# Or run the worker locally: uv run arq biolit.worker.settings.WorkerSettings
 # wait until postgres + redis are healthy
 
 # 4. Schema
@@ -38,8 +44,12 @@ uv run python scripts/init_schema.py
 # 5. API
 uv run uvicorn biolit.api.main:app --reload --host 0.0.0.0 --port 8000
 
-# 6. Dashboard (separate terminal)
+# 6. Dashboard (Streamlit, separate terminal)
 BIOLIT_API_URL=http://127.0.0.1:8000 uv run streamlit run frontend/app.py
+
+# 7. Next.js console (preferred UI)
+cd web && npm install && npm run dev
+# open http://localhost:3000 — proxies API via /backend → BIOLIT_API_URL
 ```
 
 Open the Streamlit URL, then exercise **Retrieve**, **Eval** (start with dry-run), and **Hypothesis** (dry-run first).

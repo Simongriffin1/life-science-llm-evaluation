@@ -11,14 +11,17 @@ from httpx import ASGITransport, AsyncClient
 
 from biolit.api.main import create_app
 from biolit.core.db import init_db
-from biolit.eval.runners import parse_answer
 from biolit.eval.service import EvalConfig, execute_eval
 from biolit.retrieval.service import RetrieveResult, ScoredDocument
 
 
 def test_parse_answer_extracts_label() -> None:
-    text = "Reasoning...\nAnswer: yes"
-    assert parse_answer(text, {"yes": "yes", "no": "no", "maybe": "maybe"}) == "yes"
+    from biolit.eval.parse import parse_answer
+
+    text = "Reasoning...\nThe answer is (yes)"
+    result = parse_answer(text, {"yes": "yes", "no": "no", "maybe": "maybe"})
+    assert result.unparsed is False
+    assert result.label == "yes"
 
 
 @pytest.fixture
@@ -40,7 +43,7 @@ async def eval_env() -> AsyncGenerator[None, None]:
         if model == "bad-model":
             ans = ["no", "maybe", "yes"][idx % 3]
         return {
-            "content": f"Thinking...\nAnswer: {ans}",
+            "content": f"Thinking...\nThe answer is ({ans})",
             "model": model,
             "prompt_tokens": 12,
             "completion_tokens": 4,

@@ -1,0 +1,5 @@
+{"id": "medqa-000", "question": "Which electrolyte abnormality is most associated with loop diuretics?", "options": {"A": "Hyperkalemia", "B": "Hypokalemia", "C": "Hypermagnesemia", "D": "Hypercalcemia"}, "answer": "B"}
+{"id": "medqa-001", "question": "A positive Kernig sign suggests:", "options": {"A": "Appendicitis", "B": "Meningeal irritation", "C": "Deep vein thrombosis", "D": "Cholecystitis"}, "answer": "B"}
+{"id": "medqa-002", "question": "Warfarin anticoagulation is monitored with:", "options": {"A": "aPTT", "B": "INR", "C": "Bleeding time", "D": "Platelet count"}, "answer": "B"}
+{"id": "medqa-003", "question": "Most common cause of community-acquired pneumonia in adults:", "options": {"A": "S. aureus", "B": "S. pneumoniae", "C": "P. aeruginosa", "D": "Mycoplasma only"}, "answer": "B"}
+{"id": "medqa-004", "question": "ACE inhibitors are contraindicated in:", "options": {"A": "Diabetes", "B": "Bilateral renal artery stenosis", "C": "Heart failure", "D": "Hypertension"}, "answer": "B"}

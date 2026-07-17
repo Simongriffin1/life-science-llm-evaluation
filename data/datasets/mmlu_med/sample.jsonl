@@ -1,0 +1,5 @@
+{"id": "medqa-005", "question": "Which hormone increases blood glucose?", "options": {"A": "Insulin", "B": "Glucagon", "C": "Somatostatin", "D": "GLP-1"}, "answer": "B"}
+{"id": "medqa-006", "question": "Cushing disease is due to excess:", "options": {"A": "ACTH from pituitary", "B": "ADH", "C": "Aldosterone alone", "D": "PTH"}, "answer": "A"}
+{"id": "medqa-007", "question": "First-line for acute gout flare (no contraindication):", "options": {"A": "Allopurinol", "B": "NSAIDs", "C": "Probenecid", "D": "Febuxostat"}, "answer": "B"}
+{"id": "medqa-008", "question": "Which valve is affected in rheumatic heart disease most often?", "options": {"A": "Aortic", "B": "Mitral", "C": "Tricuspid", "D": "Pulmonary"}, "answer": "B"}
+{"id": "medqa-009", "question": "TB screening IGRA measures:", "options": {"A": "Antibody titer", "B": "T-cell interferon response", "C": "Sputum AFB", "D": "Chest x-ray infiltrate"}, "answer": "B"}

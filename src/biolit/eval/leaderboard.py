@@ -13,6 +13,7 @@ async def leaderboard(
     *,
     dataset: str | None = None,
     mode: str | None = None,
+    model: str | None = None,
 ) -> list[dict[str, Any]]:
     """
     Return comparable rows: model × dataset × mode with metrics.
@@ -31,6 +32,8 @@ async def leaderboard(
             stmt = stmt.where(EvalDataset.name == dataset)
         if mode:
             stmt = stmt.where(EvalRun.mode == mode)
+        if model:
+            stmt = stmt.where(EvalRun.model == model)
         result = await session.execute(stmt)
         rows = result.all()
 
@@ -46,6 +49,8 @@ async def leaderboard(
                 "mode": run.mode,
                 "accuracy": metrics.get("accuracy"),
                 "macro_f1": metrics.get("macro_f1"),
+                "unparsed_rate": metrics.get("unparsed_rate"),
+                "few_shot_k": metrics.get("few_shot_k"),
                 "recall_at_k": metrics.get("recall_at_k"),
                 "mrr": metrics.get("mrr"),
                 "ndcg_at_k": metrics.get("ndcg_at_k"),

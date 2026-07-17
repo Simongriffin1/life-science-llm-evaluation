@@ -54,6 +54,7 @@ class HypothesisConfig(BaseModel):
     max_proposals: int = 3
     human_feedback: str | None = None
     max_total_tokens: int | None = 80_000
+    interactive: bool = False
 
 
 class HypothesisRunResult(BaseModel):

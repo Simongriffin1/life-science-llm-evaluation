@@ -1,0 +1,47 @@
+[
+  {
+    "question": "Does metformin reduce cardiovascular events in type 2 diabetes?",
+    "options": {
+      "yes": "yes",
+      "no": "no",
+      "maybe": "maybe"
+    },
+    "gold": "yes"
+  },
+  {
+    "question": "Is smoking protective against lung cancer?",
+    "options": {
+      "yes": "yes",
+      "no": "no",
+      "maybe": "maybe"
+    },
+    "gold": "no"
+  },
+  {
+    "question": "Can probiotics cure major depression?",
+    "options": {
+      "yes": "yes",
+      "no": "no",
+      "maybe": "maybe"
+    },
+    "gold": "maybe"
+  },
+  {
+    "question": "Do statins lower LDL cholesterol?",
+    "options": {
+      "yes": "yes",
+      "no": "no",
+      "maybe": "maybe"
+    },
+    "gold": "yes"
+  },
+  {
+    "question": "Is aspirin indicated for primary prevention in all adults over 40?",
+    "options": {
+      "yes": "yes",
+      "no": "no",
+      "maybe": "maybe"
+    },
+    "gold": "maybe"
+  }
+]

@@ -27,6 +27,7 @@ class EvalConfig(BaseModel):
     limit: int | None = 20
     split: str = "test"
     use_cache: bool = True
+    few_shot_k: int = Field(default=5, ge=0, le=20)
 
 
 class EvalJobResult(BaseModel):
@@ -102,14 +103,16 @@ async def execute_eval(config: EvalConfig | dict[str, Any]) -> EvalJobResult:
                             item,
                             model=model,
                             mode=mode,
+                            dataset=dataset_name,
+                            few_shot_k=cfg.few_shot_k,
                             retrieval=cfg.retrieval,
                             judge_model=cfg.judge_model if mode == "rag" else None,
                             use_cache=cfg.use_cache,
                         )
                         item_rows.append(row)
 
-                    predictions = [r["prediction"] for r in item_rows]
-                    golds = [r["gold"] for r in item_rows]
+                    predictions = [str(r.get("prediction") or "") for r in item_rows]
+                    golds = [str(r["gold"]) for r in item_rows]
                     retrieved = [r.get("retrieved_pmids") or [] for r in item_rows]
                     gold_pmids = [r.get("gold_pmids") or [] for r in item_rows]
                     grounded = []
@@ -125,6 +128,7 @@ async def execute_eval(config: EvalConfig | dict[str, Any]) -> EvalJobResult:
                         groundedness_scores=grounded or None,
                         item_stats=item_rows,
                         k=int((cfg.retrieval or {}).get("top_k", 8)),
+                        few_shot_k=cfg.few_shot_k,
                     )
 
                     async with factory() as session:

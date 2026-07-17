@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from biolit.api.routers import eval as eval_router
 from biolit.api.routers import hypothesis as hypothesis_router
@@ -38,6 +39,20 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Local Next.js console (web/) — no auth; localhost-only by design.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3001",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     @app.get("/health")
     async def health() -> dict[str, Any]:
         db = await ping_db()
@@ -54,6 +69,9 @@ def create_app() -> FastAPI:
     app.include_router(retrieve_router.router, prefix="/retrieve", tags=["retrieve"])
     app.include_router(eval_router.router, prefix="/eval", tags=["eval"])
     app.include_router(hypothesis_router.router, prefix="/hypothesize", tags=["hypothesis"])
+    from biolit.api.routers import jobs as jobs_router
+
+    app.include_router(jobs_router.router, prefix="/jobs", tags=["jobs"])
     return app
 
 
