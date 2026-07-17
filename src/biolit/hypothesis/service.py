@@ -98,8 +98,7 @@ async def _finalize_completed(
     to_store = [
         h
         for h in all_hyps + proposals
-        if h.has_provenance()
-        and h.status in {"active", "proposal", "duplicate", "rejected"}
+        if h.has_provenance() and h.status in {"active", "proposal", "duplicate", "rejected"}
     ]
     uniq: dict[str, HypothesisDraft] = {h.id: h for h in to_store}
     for p in proposals:
@@ -109,9 +108,7 @@ async def _finalize_completed(
     match_rows = list(final.get("matches") or [])
     known_ids = set(uniq.keys())
     match_rows = [
-        m
-        for m in match_rows
-        if m.get("hyp_a") in known_ids and m.get("hyp_b") in known_ids
+        m for m in match_rows if m.get("hyp_a") in known_ids and m.get("hyp_b") in known_ids
     ]
     if match_rows:
         factory = get_session_factory()
